@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/j2gg0s/otsql"
-	"github.com/j2gg0s/otsql/hook/log"
-	"github.com/j2gg0s/otsql/hook/metric"
-	"github.com/j2gg0s/otsql/hook/trace"
+	"github.com/90POE/otsql"
+	"github.com/90POE/otsql/hook/log"
+	"github.com/90POE/otsql/hook/metric"
+	"github.com/90POE/otsql/hook/trace"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"go.opentelemetry.io/otel"

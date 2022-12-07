@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/90POE/otsql/example"
+	"github.com/90POE/otsql/hook/metric"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/j2gg0s/otsql/example"
-	"github.com/j2gg0s/otsql/hook/metric"
 	_ "github.com/lib/pq"
 
 	"gorm.io/driver/mysql"

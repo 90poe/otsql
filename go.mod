@@ -1,4 +1,4 @@
-module github.com/j2gg0s/otsql
+module github.com/90POE/otsql
 
 go 1.15
 

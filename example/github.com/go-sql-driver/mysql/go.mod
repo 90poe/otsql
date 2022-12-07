@@ -1,12 +1,12 @@
-module github.com/j2gg0s/otsql/example/github.com/go-sql-driver/mysql
+module github.com/90POE/otsql/example/github.com/go-sql-driver/mysql
 
 go 1.17
 
-replace github.com/j2gg0s/otsql => ../../../../
+replace github.com/90POE/otsql => ../../../../
 
 require (
+	github.com/90POE/otsql v0.0.0-00010101000000-000000000000
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/j2gg0s/otsql v0.0.0-00010101000000-000000000000
 )
 
 require (
@@ -21,14 +21,13 @@ require (
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rs/zerolog v1.23.0 // indirect
-	go.opentelemetry.io/otel v1.6.3 // indirect
-	go.opentelemetry.io/otel/exporters/jaeger v1.6.3 // indirect
-	go.opentelemetry.io/otel/exporters/prometheus v0.29.0 // indirect
-	go.opentelemetry.io/otel/metric v0.29.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.6.3 // indirect
-	go.opentelemetry.io/otel/sdk/export/metric v0.28.0 // indirect
-	go.opentelemetry.io/otel/sdk/metric v0.29.0 // indirect
-	go.opentelemetry.io/otel/trace v1.6.3 // indirect
+	go.opentelemetry.io/otel v1.7.0 // indirect
+	go.opentelemetry.io/otel/exporters/jaeger v1.7.0 // indirect
+	go.opentelemetry.io/otel/exporters/prometheus v0.30.0 // indirect
+	go.opentelemetry.io/otel/metric v0.30.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.7.0 // indirect
+	go.opentelemetry.io/otel/sdk/metric v0.30.0 // indirect
+	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9 // indirect
 	google.golang.org/grpc v1.31.0 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
