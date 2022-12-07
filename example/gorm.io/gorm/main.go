@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/90POE/otsql/example"
-	"github.com/90POE/otsql/hook/metric"
+	"github.com/90poe/otsql/example"
+	"github.com/90poe/otsql/hook/metric"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 

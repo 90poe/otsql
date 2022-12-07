@@ -1,9 +1,9 @@
-module github.com/90POE/otsql/example/github.com/uptrace/bun
+module github.com/90poe/otsql/example/github.com/uptrace/bun
 
 go 1.17
 
 require (
-	github.com/90POE/otsql v0.0.0-00010101000000-000000000000
+	github.com/90poe/otsql v0.0.0-00010101000000-000000000000
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/uptrace/bun v1.1.4
 	github.com/uptrace/bun/dialect/mysqldialect v1.1.4
@@ -38,4 +38,4 @@ require (
 	google.golang.org/protobuf v1.26.0 // indirect
 )
 
-replace github.com/90POE/otsql => ../../../../
+replace github.com/90poe/otsql => ../../../../

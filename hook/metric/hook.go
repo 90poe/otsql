@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/90POE/otsql"
+	"github.com/90poe/otsql"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

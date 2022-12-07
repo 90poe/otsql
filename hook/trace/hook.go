@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/90POE/otsql"
+	"github.com/90poe/otsql"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -26,7 +26,7 @@ type Hook struct {
 func New(options ...Option) *Hook {
 	return &Hook{
 		Options: newOptions(options),
-		Tracer:  otel.GetTracerProvider().Tracer("github.com/90POE/otsql"),
+		Tracer:  otel.GetTracerProvider().Tracer("github.com/90poe/otsql"),
 	}
 }
 
