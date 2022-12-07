@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/j2gg0s/otsql"
+	"github.com/90poe/otsql"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
