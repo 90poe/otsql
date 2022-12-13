@@ -2,8 +2,6 @@ package log
 
 import (
 	"context"
-	"database/sql/driver"
-	"errors"
 	"time"
 
 	"github.com/90poe/otsql"
@@ -24,23 +22,11 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 
 func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	var e *zerolog.Event
-	if time.Since(evt.BeginAt) > hook.Slow {
-		if e == nil {
-			e = hook.Warn(ctx)
-		}
-		e = e.Bool("slow", true)
-	}
 	if evt.Err != nil {
-		if e == nil {
-			if errors.Is(evt.Err, driver.ErrSkip) && !hook.LogErrSkipAsWarn {
-				e = hook.Info(ctx)
-			} else {
-				e = hook.Warn(ctx)
-			}
-		}
-		e = e.Err(evt.Err)
-	}
-	if e == nil {
+		e = hook.Warn(ctx).Err(evt.Err)
+	} else if time.Since(evt.BeginAt) > hook.Slow {
+		e = hook.Warn(ctx).Bool("slow", true)
+	} else {
 		level, ok := hook.MethodLevels[evt.Method]
 		if !ok {
 			level = hook.DefaultLevel
@@ -96,8 +82,6 @@ type Options struct {
 
 	Query bool
 	Args  bool
-
-	LogErrSkipAsWarn bool
 }
 
 func newOptions(opts []Option) *Options {
@@ -167,12 +151,6 @@ func WithQuery(b bool) Option {
 func WithArgs(b bool) Option {
 	return func(o *Options) {
 		o.Args = b
-	}
-}
-
-func LogErrSkipAsWarn(b bool) Option {
-	return func(o *Options) {
-		o.LogErrSkipAsWarn = b
 	}
 }
 
