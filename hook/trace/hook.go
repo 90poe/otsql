@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/90poe/otsql"
+	"github.com/j2gg0s/otsql"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -26,13 +26,17 @@ type Hook struct {
 func New(options ...Option) *Hook {
 	return &Hook{
 		Options: newOptions(options),
-		Tracer:  otel.GetTracerProvider().Tracer("github.com/90poe/otsql"),
+		Tracer:  otel.GetTracerProvider().Tracer("github.com/j2gg0s/otsql"),
 	}
 }
 
 var _ otsql.Hook = (*Hook)(nil)
 
 func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context {
+	if !hook.AllowRoot && !trace.SpanFromContext(ctx).IsRecording() {
+		return ctx
+	}
+
 	switch evt.Method {
 	case otsql.MethodPing:
 		if !hook.Ping {
