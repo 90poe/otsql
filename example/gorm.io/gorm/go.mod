@@ -2,10 +2,10 @@ module github.com/j2gg0s/otsql/example/gorm.io/gorm
 
 go 1.14
 
-replace github.com/j2gg0s/otsql => ../../../
+replace github.com/90poe/otsql => ../../../
 
 require (
-	github.com/90poe/otsql v1.0.2
+	github.com/90poe/otsql v1.1.0
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/lib/pq v1.10.3
 	gorm.io/driver/mysql v1.1.2
