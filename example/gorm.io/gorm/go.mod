@@ -1,6 +1,6 @@
 module github.com/j2gg0s/otsql/example/gorm.io/gorm
 
-go 1.14
+go 1.21.6
 
 replace github.com/90poe/otsql => ../../../
 

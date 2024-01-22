@@ -1,6 +1,6 @@
 module github.com/90poe/otsql/example/github.com/go-sql-driver/mysql
 
-go 1.14
+go 1.21.6
 
 replace github.com/90poe/otsql => ../../../../
 
