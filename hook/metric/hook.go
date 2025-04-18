@@ -2,6 +2,7 @@ package metric
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/90poe/otsql"
@@ -34,7 +35,8 @@ func New(opts ...Option) (*Hook, error) {
 
 	err := o.Registerer.Register(o.Latency)
 	if err != nil {
-		if _, ok := err.(prometheus.AlreadyRegisteredError); !ok {
+		var alreadyRegisteredError prometheus.AlreadyRegisteredError
+		if !errors.As(err, &alreadyRegisteredError) {
 			return nil, err
 		}
 	}

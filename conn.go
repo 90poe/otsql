@@ -368,7 +368,7 @@ func (s otStmt) ExecContext(ctx context.Context, args []driver.NamedValue) (res 
 	}()
 
 	// we already tested driver when wrap stmt
-	res, err = s.Stmt.(driver.StmtExecContext).ExecContext(ctx, args)
+	res, err = s.Stmt.(driver.StmtExecContext).ExecContext(ctx, args) //nolint:errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (s otStmt) QueryContext(ctx context.Context, args []driver.NamedValue) (row
 	}()
 
 	// we already tested driver when wrap stmt
-	rows, err = s.Stmt.(driver.StmtQueryContext).QueryContext(ctx, args)
+	rows, err = s.Stmt.(driver.StmtQueryContext).QueryContext(ctx, args) //nolint:errcheck
 	if err != nil {
 		return nil, err
 	}

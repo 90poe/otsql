@@ -147,7 +147,7 @@ func (d otDriver) Open(name string) (conn driver.Conn, err error) {
 }
 
 func (d otDriver) OpenConnector(name string) (driver.Connector, error) {
-	connector, err := d.Driver.(driver.DriverContext).OpenConnector(name)
+	connector, err := d.Driver.(driver.DriverContext).OpenConnector(name) //nolint:errcheck
 	if err != nil {
 		return nil, err
 	}

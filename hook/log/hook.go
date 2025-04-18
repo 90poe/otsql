@@ -195,6 +195,6 @@ func (logger *zerologger) GetLevel() zerolog.Level {
 	return logger.Logger.GetLevel()
 }
 
-func WrapZerolog(logger zerolog.Logger) Logger {
+func WrapZerolog(logger zerolog.Logger) Logger { //nolint:ireturn
 	return &zerologger{logger}
 }
