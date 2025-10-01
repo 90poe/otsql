@@ -104,8 +104,8 @@ otsql support trace with opentelemetry by `hook/trace`.
 otsql support metric with prometheus by `hook/metric`.
 
 | Metric                 | Search suffix  | Tags                                 |
-| ---------------------- | -------------- | ------------------------------------ |
-| Latency in millisecond | go_sql_latency | sql_instance, sql_method, sql_status |
+|------------------------| -------------- | ------------------------------------ |
+| Latency in microsecond | go_sql_latency | sql_instance, sql_method, sql_status |
 
 You can use `metric.Stats` to monitor connection pool, all metric supprt tag `sql_instance`.
 | Metric | Search suffix |
@@ -115,7 +115,7 @@ You can use `metric.Stats` to monitor connection pool, all metric supprt tag `sq
 | The total number of connections wait for | go_sql_conn_wait |
 | The total number of connections closed because of SetMaxIdleConns | go_sql_conn_idle_closed |
 | The total number of connections closed because of SetConnMaxLifetime | go_sql_conn_lifetime_closed |
-| The total time blocked by waiting for a new connection, nanosecond | go_sql_conn_wait_ns |
+| The total time blocked by waiting for a new connection, millisecond | go_sql_conn_wait_ms |
 
 ## Test
 
