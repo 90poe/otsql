@@ -49,7 +49,7 @@ var (
 	DefaultLatency = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "go_sql_latency",
-			Help: "The latency of sql calls in milliseconds.",
+			Help: "The latency of sql calls in microseconds.",
 		},
 		[]string{sqlInstance, sqlDatabase, sqlMethod, sqlStatus},
 	)

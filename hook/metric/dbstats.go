@@ -74,7 +74,7 @@ var (
 	ConnLifetimeClosed = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "go_sql_conn_lifetime_closed",
-			Help: "The total number of connections closed becase of SetConnMaxLifetime",
+			Help: "The total number of connections closed because of SetConnMaxLifetime",
 		},
 		[]string{sqlInstance},
 	)
