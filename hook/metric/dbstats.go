@@ -20,6 +20,8 @@ func Stats(ctx context.Context, db *sql.DB, name string, every time.Duration) {
 				sqlInstance: name,
 			}
 
+			ConnMaxOpen.With(labels).Set(float64(stats.MaxOpenConnections))
+
 			ConnInUse.With(labels).Set(float64(stats.InUse))
 			ConnIdle.With(labels).Set(float64(stats.Idle))
 
@@ -36,6 +38,13 @@ func Stats(ctx context.Context, db *sql.DB, name string, every time.Duration) {
 }
 
 var (
+	ConnMaxOpen = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "go_sql_conn_max_open",
+			Help: "The maximum number of open connections to the database.",
+		},
+		[]string{sqlInstance},
+	)
 	ConnInUse = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "go_sql_conn_in_use",
@@ -88,6 +97,7 @@ var (
 )
 
 func init() {
+	prometheus.MustRegister(ConnMaxOpen)
 	prometheus.MustRegister(ConnInUse)
 	prometheus.MustRegister(ConnIdle)
 	prometheus.MustRegister(ConnWait)
