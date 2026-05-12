@@ -76,21 +76,22 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 	if evt.Method != "" {
 		fields = append(fields, "method", string(evt.Method))
 	}
+	if slow {
+		fields = append(fields, "slow", true)
+	}
 	fields = append(fields,
 		"code", otsql.ErrToCode(evt.Err).String(),
 		"latency", latency,
 	)
-	if evt.Err != nil {
-		fields = append(fields, "err", evt.Err)
-	}
-	if slow {
-		fields = append(fields, "slow", true)
-	}
 	if hook.Query && evt.Query != "" {
 		fields = append(fields, "query", evt.Query)
 		if hook.Args && evt.Args != nil {
 			fields = append(fields, "params", evt.Args)
 		}
+	}
+	// append error at the end
+	if evt.Err != nil {
+		fields = append(fields, "error", evt.Err)
 	}
 
 	logger := hook.Builder.Build(ctx).WithFields(fields...)
