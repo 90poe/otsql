@@ -8,7 +8,7 @@ Add an otsql wrapper to your existing database code to hook any sql command.
 -   Support tracing with [OpenTelemetry](https://opentelemetry.io/) by [otsql/hook/trace](https://github.com/j2gg0s/otsql/tree/bun/hook/metric).
 -   Support monitor latency and connection pool stats with [Prometheus](https://github.com/prometheus/prometheus)
     by [otsql/hook/metric](https://github.com/j2gg0s/otsql/tree/bun/hook/metric).
--   Support acess log with [zerolog](https://github.com/rs/zerolog) by [otsql/hook/trace](https://github.com/j2gg0s/otsql/tree/bun/hook/trace).
+-   Support access log via a small implementation-agnostic `Logger` interface by [otsql/hook/log](https://github.com/j2gg0s/otsql/tree/bun/hook/log) — bring your own zerolog/slog/logrus/etc. adapter.
 
 First version transformed from [ocsql](https://github.com/opencensus-integrations/ocsql).
 
@@ -52,7 +52,9 @@ driverName, err := otsql.Register(
             trace.WithQueryParams(true),
         ),
         metricHook,
-        log.New(),
+        log.New(
+            log.WithLogger(myLoggerBuilder, log.LevelInfo),
+        ),
     ),
 )
 if err != nil {

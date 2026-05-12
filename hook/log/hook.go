@@ -5,11 +5,34 @@ import (
 	"time"
 
 	"github.com/90poe/otsql"
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
-// Hook
+// Logger is the minimal logging interface required by the hook. It is
+// intentionally implementation-agnostic: args are flat key/value tuples
+// (k1, v1, k2, v2, ...).
+type Logger interface {
+	Debug(message string, args ...any)
+	Info(message string, args ...any)
+	Error(message string, args ...any)
+	WithFields(fields ...any) Logger
+}
+
+// ContextLoggerBuilder produces a Logger bound to a request context.
+type ContextLoggerBuilder interface {
+	Build(ctx context.Context) Logger
+}
+
+// Level is the log level used to dispatch a log entry to one of the
+// Logger methods.
+type Level int
+
+const (
+	LevelDebug Level = iota
+	LevelInfo
+	LevelError
+)
+
+// Hook is an otsql.Hook that emits an access log entry after every SQL event.
 type Hook struct {
 	*Options
 }
@@ -21,64 +44,80 @@ func (hook *Hook) Before(ctx context.Context, evt *otsql.Event) context.Context 
 }
 
 func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
-	var e *zerolog.Event
-	if evt.Err != nil {
-		e = hook.Warn(ctx).Err(evt.Err)
-	} else if time.Since(evt.BeginAt) > hook.Slow {
-		e = hook.Warn(ctx).Bool("slow", true)
-	} else {
-		level, ok := hook.MethodLevels[evt.Method]
+	latency := time.Since(evt.BeginAt)
+
+	var level Level
+	slow := false
+	switch {
+	case evt.Err != nil:
+		level = LevelError
+	case latency > hook.Slow:
+		level = LevelInfo
+		slow = true
+	default:
+		l, ok := hook.MethodLevels[evt.Method]
 		if !ok {
-			level = hook.DefaultLevel
+			l = hook.DefaultLevel
 		}
-		if hook.GetLevel() <= level {
-			e = hook.WithLevel(ctx, level)
-		}
+		level = l
 	}
 
-	if e == nil {
-		return
-	}
-
-	e = e.Str("kind", "sql")
+	fields := make([]any, 0, 20)
+	fields = append(fields, "kind", "sql")
 	if evt.Instance != "" {
-		e = e.Str("server", evt.Instance)
+		fields = append(fields, "server", evt.Instance)
 	}
 	if evt.Conn != "" {
-		e = e.Str("conn", evt.Conn)
+		fields = append(fields, "conn", evt.Conn)
 	}
 	if evt.Database != "" {
-		e = e.Str("database", evt.Database)
+		fields = append(fields, "database", evt.Database)
 	}
 	if evt.Method != "" {
-		e = e.Str("method", string(evt.Method))
+		fields = append(fields, "method", string(evt.Method))
 	}
-	e = e.Str("code", otsql.ErrToCode(evt.Err).String()).
-		Dur("latency", time.Since(evt.BeginAt))
-
+	fields = append(fields,
+		"code", otsql.ErrToCode(evt.Err).String(),
+		"latency", latency,
+	)
+	if evt.Err != nil {
+		fields = append(fields, "err", evt.Err)
+	}
+	if slow {
+		fields = append(fields, "slow", true)
+	}
 	if hook.Query && evt.Query != "" {
-		e.Str("query", evt.Query)
+		fields = append(fields, "query", evt.Query)
 		if hook.Args && evt.Args != nil {
-			e.Interface("params", evt.Args)
+			fields = append(fields, "params", evt.Args)
 		}
 	}
 
-	e.Msg("AccessLog")
+	logger := hook.Builder.Build(ctx).WithFields(fields...)
+	switch level {
+	case LevelDebug:
+		logger.Debug("AccessLog")
+	case LevelError:
+		logger.Error("AccessLog")
+	default:
+		logger.Info("AccessLog")
+	}
 }
 
 func New(opts ...Option) *Hook {
 	return &Hook{Options: newOptions(opts)}
 }
 
-// Option
+// Option configures a Hook.
 type Option func(*Options)
 
+// Options is the resolved configuration of a Hook.
 type Options struct {
-	Logger
-	Slow time.Duration
+	Builder      ContextLoggerBuilder
+	DefaultLevel Level
+	MethodLevels map[otsql.Method]Level
 
-	MethodLevels map[otsql.Method]zerolog.Level
-	DefaultLevel zerolog.Level
+	Slow time.Duration
 
 	Query bool
 	Args  bool
@@ -86,28 +125,28 @@ type Options struct {
 
 func newOptions(opts []Option) *Options {
 	o := &Options{
-		Logger: WrapZerolog(log.Logger),
-		Slow:   time.Second * 3,
+		Builder:      noopBuilder{},
+		DefaultLevel: LevelInfo,
+		Slow:         time.Second * 3,
 
-		MethodLevels: map[otsql.Method]zerolog.Level{
-			otsql.MethodPing:     zerolog.DebugLevel,
-			otsql.MethodQuery:    zerolog.DebugLevel,
-			otsql.MethodPrepare:  zerolog.DebugLevel,
-			otsql.MethodBegin:    zerolog.DebugLevel,
-			otsql.MethodCommit:   zerolog.DebugLevel,
-			otsql.MethodRollback: zerolog.DebugLevel,
+		MethodLevels: map[otsql.Method]Level{
+			otsql.MethodPing:     LevelDebug,
+			otsql.MethodQuery:    LevelDebug,
+			otsql.MethodPrepare:  LevelDebug,
+			otsql.MethodBegin:    LevelDebug,
+			otsql.MethodCommit:   LevelDebug,
+			otsql.MethodRollback: LevelDebug,
 
-			otsql.MethodLastInsertId: zerolog.DebugLevel,
-			otsql.MethodRowsAffected: zerolog.DebugLevel,
-			otsql.MethodRowsClose:    zerolog.DebugLevel,
-			otsql.MethodRowsNext:     zerolog.DebugLevel,
+			otsql.MethodLastInsertId: LevelDebug,
+			otsql.MethodRowsAffected: LevelDebug,
+			otsql.MethodRowsClose:    LevelDebug,
+			otsql.MethodRowsNext:     LevelDebug,
 
-			otsql.MethodExec:         zerolog.InfoLevel,
-			otsql.MethodCreateConn:   zerolog.InfoLevel,
-			otsql.MethodCloseConn:    zerolog.InfoLevel,
-			otsql.MethodResetSession: zerolog.DebugLevel,
+			otsql.MethodExec:         LevelInfo,
+			otsql.MethodCreateConn:   LevelInfo,
+			otsql.MethodCloseConn:    LevelInfo,
+			otsql.MethodResetSession: LevelDebug,
 		},
-		DefaultLevel: zerolog.InfoLevel,
 
 		Query: true,
 		Args:  false,
@@ -118,9 +157,18 @@ func newOptions(opts []Option) *Options {
 	return o
 }
 
-func WithLogger(logger Logger) Option {
+// WithLogger installs a ContextLoggerBuilder together with the default level
+// to use when a method has no explicit override. Both arguments are required:
+// it is impossible to install a logger without choosing a default level.
+func WithLogger(builder ContextLoggerBuilder) Option {
 	return func(o *Options) {
-		o.Logger = logger
+		o.Builder = builder
+	}
+}
+
+func WithDefaultLevel(level Level) Option {
+	return func(o *Options) {
+		o.DefaultLevel = level
 	}
 }
 
@@ -130,15 +178,9 @@ func WithSlow(d time.Duration) Option {
 	}
 }
 
-func WithMethodLevel(method otsql.Method, level zerolog.Level) Option {
+func WithMethodLevel(method otsql.Method, level Level) Option {
 	return func(o *Options) {
 		o.MethodLevels[method] = level
-	}
-}
-
-func WithDefaultLevel(level zerolog.Level) Option {
-	return func(o *Options) {
-		o.DefaultLevel = level
 	}
 }
 
@@ -154,47 +196,16 @@ func WithArgs(b bool) Option {
 	}
 }
 
-// Logger
-type Logger interface {
-	Debug(context.Context) *zerolog.Event
-	Info(context.Context) *zerolog.Event
-	Warn(context.Context) *zerolog.Event
-	Error(context.Context) *zerolog.Event
+// noopBuilder is the default builder when WithLogger is not called. It
+// produces a Logger that discards every entry, keeping the hook silent
+// rather than forcing a dependency on any concrete log implementation.
+type noopBuilder struct{}
 
-	WithLevel(context.Context, zerolog.Level) *zerolog.Event
-	GetLevel() zerolog.Level
-}
+func (noopBuilder) Build(context.Context) Logger { return noopLogger{} } //nolint: ireturn
 
-type zerologger struct {
-	zerolog.Logger
-}
+type noopLogger struct{}
 
-var _ Logger = (*zerologger)(nil)
-
-func (logger *zerologger) Debug(ctx context.Context) *zerolog.Event {
-	return logger.Logger.Debug()
-}
-
-func (logger *zerologger) Info(ctx context.Context) *zerolog.Event {
-	return logger.Logger.Info()
-}
-
-func (logger *zerologger) Warn(ctx context.Context) *zerolog.Event {
-	return logger.Logger.Warn()
-}
-
-func (logger *zerologger) Error(ctx context.Context) *zerolog.Event {
-	return logger.Logger.Error()
-}
-
-func (logger *zerologger) WithLevel(ctx context.Context, level zerolog.Level) *zerolog.Event {
-	return logger.Logger.WithLevel(level)
-}
-
-func (logger *zerologger) GetLevel() zerolog.Level {
-	return logger.Logger.GetLevel()
-}
-
-func WrapZerolog(logger zerolog.Logger) Logger { //nolint:ireturn
-	return &zerologger{logger}
-}
+func (noopLogger) Debug(string, ...any)     {}
+func (noopLogger) Info(string, ...any)      {}
+func (noopLogger) Error(string, ...any)     {}
+func (noopLogger) WithFields(...any) Logger { return noopLogger{} } //nolint: ireturn
