@@ -1,0 +1,4 @@
+# AI review infrastructure — only administrators can approve changes to these files.
+# Prevents developers from amending canonical review rules or CI workflows without oversight.
+/REVIEW.md @90poe/administrators
+/CODEOWNERS @90poe/administrators
