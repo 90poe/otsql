@@ -187,11 +187,11 @@ func TestNoopBuilder_IsDefault(t *testing.T) {
 
 func TestAfter_LevelOff(t *testing.T) {
 	tests := []struct {
-		name    string
-		opts    []Option
-		evt     *otsql.Event
-		wantLen int
-		want    Level
+		name       string
+		opts       []Option
+		evt        *otsql.Event
+		wantLogged bool
+		wantLevel  Level
 	}{
 		{
 			name: "method set to off is dropped",
@@ -206,8 +206,8 @@ func TestAfter_LevelOff(t *testing.T) {
 				Query:   "SELECT 1",
 				BeginAt: time.Now(),
 			},
-			wantLen: 1,
-			want:    LevelDebug,
+			wantLogged: true,
+			wantLevel:  LevelDebug,
 		},
 		{
 			name: "error still logs when method is off",
@@ -217,8 +217,8 @@ func TestAfter_LevelOff(t *testing.T) {
 				BeginAt: time.Now(),
 				Err:     errors.New("boom"),
 			},
-			wantLen: 1,
-			want:    LevelError,
+			wantLogged: true,
+			wantLevel:  LevelError,
 		},
 		{
 			name: "slow still logs when method is off",
@@ -230,8 +230,8 @@ func TestAfter_LevelOff(t *testing.T) {
 				Method:  otsql.MethodPing,
 				BeginAt: time.Now().Add(-time.Second),
 			},
-			wantLen: 1,
-			want:    LevelInfo,
+			wantLogged: true,
+			wantLevel:  LevelInfo,
 		},
 		{
 			name: "default level off drops unmapped methods",
@@ -249,10 +249,13 @@ func TestAfter_LevelOff(t *testing.T) {
 
 			hook.After(context.Background(), tt.evt)
 
-			require.Len(t, *entries, tt.wantLen)
-			if tt.wantLen > 0 {
-				require.Equal(t, tt.want, (*entries)[0].level)
+			if !tt.wantLogged {
+				require.Empty(t, *entries)
+				return
 			}
+
+			require.Len(t, *entries, 1)
+			require.Equal(t, tt.wantLevel, (*entries)[0].level)
 		})
 	}
 }

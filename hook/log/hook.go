@@ -31,11 +31,14 @@ const (
 	LevelInfo
 	LevelError
 
-	// LevelOff drops the entry instead of logging it. It is only reachable
-	// through DefaultLevel or a MethodLevels override, so a failed or slow
-	// event is still logged: those set their level before the override is
-	// consulted. Use it to silence routine methods such as ping while
-	// keeping the errors and the slow-query warnings they can produce.
+	// LevelOff drops the entry instead of logging it. Set it per method with
+	// WithMethodLevel to silence a routine method such as ping. A failed or
+	// slow event is still logged, because those branches pick their level
+	// before the method override is read.
+	//
+	// WithDefaultLevel(LevelOff) on its own silences nothing: DefaultLevel is
+	// consulted only for a method missing from MethodLevels, and newOptions
+	// gives every otsql.Method an entry. Silence each method you want dropped.
 	LevelOff
 )
 
