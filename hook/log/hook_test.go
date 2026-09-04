@@ -87,11 +87,9 @@ func TestAfter_ErrorLogsAtErrorLevel(t *testing.T) {
 	e := (*entries)[0]
 	require.Equal(t, LevelError, e.level)
 	require.Equal(t, "AccessLog", e.message)
-	if v, ok := fieldValue(e.fields, "err"); ok {
-		require.EqualError(t, v.(error), "boom")
-	} else {
-		t.Fatal("missing err field")
-	}
+	v, ok := fieldValue(e.fields, "error")
+	require.True(t, ok, "missing error field")
+	require.EqualError(t, v.(error), "boom")
 }
 
 func TestAfter_SlowLogsAtInfoLevelWithSlowField(t *testing.T) {
@@ -185,4 +183,79 @@ func TestNoopBuilder_IsDefault(t *testing.T) {
 			BeginAt: time.Now(),
 		})
 	})
+}
+
+func TestAfter_LevelOff(t *testing.T) {
+	tests := []struct {
+		name       string
+		opts       []Option
+		evt        *otsql.Event
+		wantLogged bool
+		wantLevel  Level
+	}{
+		{
+			name: "method set to off is dropped",
+			opts: []Option{WithMethodLevel(otsql.MethodPing, LevelOff)},
+			evt:  &otsql.Event{Method: otsql.MethodPing, BeginAt: time.Now()},
+		},
+		{
+			name: "other methods still log",
+			opts: []Option{WithMethodLevel(otsql.MethodPing, LevelOff)},
+			evt: &otsql.Event{
+				Method:  otsql.MethodQuery,
+				Query:   "SELECT 1",
+				BeginAt: time.Now(),
+			},
+			wantLogged: true,
+			wantLevel:  LevelDebug,
+		},
+		{
+			name: "error still logs when method is off",
+			opts: []Option{WithMethodLevel(otsql.MethodPing, LevelOff)},
+			evt: &otsql.Event{
+				Method:  otsql.MethodPing,
+				BeginAt: time.Now(),
+				Err:     errors.New("boom"),
+			},
+			wantLogged: true,
+			wantLevel:  LevelError,
+		},
+		{
+			name: "slow still logs when method is off",
+			opts: []Option{
+				WithMethodLevel(otsql.MethodPing, LevelOff),
+				WithSlow(time.Millisecond),
+			},
+			evt: &otsql.Event{
+				Method:  otsql.MethodPing,
+				BeginAt: time.Now().Add(-time.Second),
+			},
+			wantLogged: true,
+			wantLevel:  LevelInfo,
+		},
+		{
+			name: "default level off drops unmapped methods",
+			opts: []Option{WithDefaultLevel(LevelOff)},
+			evt: &otsql.Event{
+				Method:  otsql.Method("unmapped"),
+				BeginAt: time.Now(),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hook, entries := newCaptureHook(t, tt.opts...)
+
+			hook.After(context.Background(), tt.evt)
+
+			if !tt.wantLogged {
+				require.Empty(t, *entries)
+				return
+			}
+
+			require.Len(t, *entries, 1)
+			require.Equal(t, tt.wantLevel, (*entries)[0].level)
+		})
+	}
 }

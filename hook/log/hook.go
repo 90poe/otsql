@@ -30,6 +30,16 @@ const (
 	LevelDebug Level = iota
 	LevelInfo
 	LevelError
+
+	// LevelOff drops the entry instead of logging it. Set it per method with
+	// WithMethodLevel to silence a routine method such as ping. A failed or
+	// slow event is still logged, because those branches pick their level
+	// before the method override is read.
+	//
+	// WithDefaultLevel(LevelOff) on its own silences nothing: DefaultLevel is
+	// consulted only for a method missing from MethodLevels, and newOptions
+	// gives every otsql.Method an entry. Silence each method you want dropped.
+	LevelOff
 )
 
 // Hook is an otsql.Hook that emits an access log entry after every SQL event.
@@ -60,6 +70,10 @@ func (hook *Hook) After(ctx context.Context, evt *otsql.Event) {
 			l = hook.DefaultLevel
 		}
 		level = l
+	}
+
+	if level == LevelOff {
+		return
 	}
 
 	fields := make([]any, 0, 20)
